@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -32,9 +33,9 @@ class _PomodoroPageState extends State<PomodoroPage> {
 
   // Pendientes primero, completadas al final: tu move_task, declarativo.
   List<Task> get _ordered => [
-        ..._tasks.where((t) => !t.done),
-        ..._tasks.where((t) => t.done),
-      ];
+    ..._tasks.where((t) => !t.done),
+    ..._tasks.where((t) => t.done),
+  ];
 
   @override
   void dispose() {
@@ -46,7 +47,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
     super.dispose();
   }
 
-   void _addTask(String raw) {
+  void _addTask(String raw) {
     final text = raw.trim();
     if (text.isEmpty) return;
     setState(() => _tasks.add(Task(id: _nextId++, text: text)));
@@ -119,11 +120,13 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   const SizedBox(height: 6),
                   TextField(
                     controller: _input,
-                    onEditingComplete: () => _addTask(_input.text), // ~ returnPressed
+                    onEditingComplete: () =>
+                        _addTask(_input.text), // ~ returnPressed
                     style: const TextStyle(color: textColor, fontSize: 16),
                     decoration: const InputDecoration(
                       hintText: '¿En qué vas a trabajar?',
                       hintStyle: TextStyle(color: textColorTertiary),
+
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -185,7 +188,9 @@ class _PomodoroPageState extends State<PomodoroPage> {
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(child: _AppButton(label: 'Reiniciar', onTap: _reset)),
+            Expanded(
+              child: _AppButton(label: 'Reiniciar', onTap: _reset),
+            ),
           ],
         ),
       ],
@@ -193,15 +198,15 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _buildCountdown() => Center(
-        child: Text(
-          _format(_remaining),
-          style: const TextStyle(
-            color: textColorTertiary,
-            fontSize: 64,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
+    child: Text(
+      _format(_remaining),
+      style: const TextStyle(
+        color: textColorTertiary,
+        fontSize: 64,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
 
   Widget _buildPickers() {
     return Row(
@@ -261,9 +266,7 @@ class _AppButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      ).copyWith(
-        overlayColor: WidgetStateProperty.all(primaryColor),
-      ),
+      ).copyWith(overlayColor: WidgetStateProperty.all(primaryColor)),
       child: Text(label, style: const TextStyle(fontSize: 16)),
     );
   }

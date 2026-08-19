@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // Paleta portada 1:1 desde las variables de main.py.
 // En Dart los colores son 0xAARRGGBB: el FF inicial es la opacidad.
@@ -16,3 +17,4 @@ const borderColor = Color(0xFFE4E6E9);
 
 const windowRadius = 12.0;
 const taskRowHeight = 46.0;
+final fontFamily = GoogleFonts.manropeTextTheme();
