@@ -110,7 +110,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Tareas',
+                    'Tasks',
                     style: TextStyle(
                       color: textColor,
                       fontSize: 20,
@@ -147,6 +147,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
   Widget _buildTaskList() {
     final ordered = _ordered;
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: SizedBox(
         height: ordered.length * taskRowHeight,
         child: Stack(
@@ -172,28 +173,35 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   Widget _buildTimer() {
-    return Column(
-      children: [
-        SizedBox(
-          height: 180,
-          child: _idle ? _buildPickers() : _buildCountdown(),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _AppButton(
-                label: _running ? 'Pausar' : 'Iniciar',
-                onTap: _toggleTimer,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: degrade,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 180,
+            child: _idle ? _buildPickers() : _buildCountdown(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _AppButton(
+                  label: _running ? 'Pausar' : 'Iniciar',
+                  onTap: _toggleTimer,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _AppButton(label: 'Reiniciar', onTap: _reset),
-            ),
-          ],
-        ),
-      ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: _AppButton(label: 'Reiniciar', onTap: _reset),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

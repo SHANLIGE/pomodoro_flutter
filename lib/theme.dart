@@ -17,4 +17,15 @@ const borderColor = Color(0xFFE4E6E9);
 
 const windowRadius = 12.0;
 const taskRowHeight = 46.0;
+const backgroundtransparent = Colors.transparent;
+
+const degrade = LinearGradient(
+  colors: [
+    Color.fromARGB(255, 255, 162, 138),
+    Color.fromARGB(255, 255, 136, 245),
+    Color.fromARGB(255, 136, 144, 255),
+  ],
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+);
 final fontFamily = GoogleFonts.manropeTextTheme();
