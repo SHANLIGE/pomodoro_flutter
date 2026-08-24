@@ -3,15 +3,15 @@ import 'package:window_manager/window_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'theme.dart';
-import 'pomodoro_page.dart';
+import 'app_shell.dart'; 
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
   const options = WindowOptions(
-    size: Size(650, 750),
-    minimumSize: Size(420, 560),
+    size: Size(940, 640),     
+    minimumSize: Size(720, 480),
     center: true,
     backgroundColor: Colors.transparent,
     titleBarStyle: TitleBarStyle.hidden,
@@ -48,7 +48,7 @@ class PomodoroApp extends StatelessWidget {
       ),
       home: const ClipRRect(
         borderRadius: BorderRadius.all(Radius.circular(windowRadius)),
-        child: PomodoroPage(),
+        child: AppShell(),
       ),
     );
   }

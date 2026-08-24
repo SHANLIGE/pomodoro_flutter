@@ -19,6 +19,16 @@ const windowRadius = 12.0;
 const taskRowHeight = 46.0;
 const backgroundtransparent = Colors.transparent;
 
+// Superficies
+const surfaceColor = Color(0xFFFFFFFF);
+const sidebarColor = Color(0xFFFBF8FA);
+const dividerColor = Color(0xFFF0ECEF);
+const hoverSurface = Color(0xFFF6F1F5);
+
+// Medidas del shell
+const sidebarWidth = 216.0;
+const cardRadius = 14.0;
+
 const degrade = LinearGradient(
   colors: [
     Color.fromARGB(255, 255, 162, 138),
