@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // --- Paleta ---
-const cream = Color(0xFFFBF9F3);
-const creamSidebar = Color(0xFFF4F1E7);
-const creamBar = Color(0xFFFCFBF6);
+const cream = Color(0xFFFCF9F2);
+const creamSidebar = Color(0xFFFCF9F2);
+const creamBar = Color(0xFFFCF9F2);
 
 const green = Color(0xFF3F9142);
 const greenBright = Color(0xFF4CAF50);
 const greenSoft = Color(0xFFEAF3E2);
 const greenBorder = Color(0xFF6BA85F);
 
-const ink = Color(0xFF2B2B2B);
+const ink = Color(0xFF364E3F);
 const inkMuted = Color(0xFF8C8B80);
 const inkFaint = Color(0xFFB5B2A5);
 const line = Color(0xFFD8D3C4);

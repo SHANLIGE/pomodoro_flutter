@@ -195,7 +195,7 @@ class _AppShellState extends State<AppShell> {
                     child: Text('☰', style: mono(20, color: inkMuted)),
                   ),
                   SizedBox(
-                    width: 660,
+                    width: 655,
                     child: TimerBar(
                       remaining: _remaining,
                       total: _totalSeconds,
