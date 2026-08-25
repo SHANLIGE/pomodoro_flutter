@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'task.dart';
 import 'theme.dart';
+import 'widgets/app_icon.dart';
+import 'widgets/pixel_box.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/task_list.dart';
 import 'widgets/timer_bar.dart';
@@ -21,6 +23,13 @@ class _AppShellState extends State<AppShell> {
   int _nextId = 0;
 
   AppSection _section = AppSection.hoy;
+  int? _currentProject;
+
+  final _projects = [
+    Project(0, 'Project 1', projectPink),
+    Project(1, 'Project 2', projectBlue),
+    Project(2, 'Project 3', projectRed),
+  ];
 
   final _minCtrl = FixedExtentScrollController(initialItem: 25);
   final _secCtrl = FixedExtentScrollController(initialItem: 0);
@@ -43,14 +52,33 @@ class _AppShellState extends State<AppShell> {
 
   // --- Tareas ---
 
-  List<Task> get _pending => _tasks.where((t) => !t.done).toList();
-  List<Task> get _done => _tasks.where((t) => t.done).toList();
-  List<Task> get _ordered => [..._pending, ..._done];
+  /// Primero filtra por proyecto, luego la sección decide qué subconjunto.
+  List<Task> get _scoped => _currentProject == null
+      ? _tasks
+      : _tasks.where((t) => t.projectId == _currentProject).toList();
+
+  List<Task> get _visible {
+    final base = _scoped;
+    return switch (_section) {
+      AppSection.hoy => base.where((t) => !t.done).toList(),
+      AppSection.completadas => base.where((t) => t.done).toList(),
+      _ => [
+          ...base.where((t) => !t.done),
+          ...base.where((t) => t.done),
+        ],
+    };
+  }
 
   void _addTask(String raw) {
     final text = raw.trim();
     if (text.isEmpty) return;
-    setState(() => _tasks.add(Task(id: _nextId++, text: text)));
+    setState(() {
+      _tasks.add(Task(
+        id: _nextId++,
+        text: text,
+        projectId: _currentProject,
+      ));
+    });
     _input.clear();
   }
 
@@ -95,10 +123,17 @@ class _AppShellState extends State<AppShell> {
 
   // --- UI ---
 
+  String get _headerTitle {
+    if (_currentProject != null) {
+      return _projects.firstWhere((p) => p.id == _currentProject).name;
+    }
+    return _section.label;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: surfaceColor,
+      backgroundColor: cream,
       body: Column(
         children: [
           const TitleBar(),
@@ -108,12 +143,18 @@ class _AppShellState extends State<AppShell> {
               children: [
                 Sidebar(
                   current: _section,
-                  onSelect: (s) => setState(() => _section = s),
-                  counts: {
-                    AppSection.hoy: _pending.length,
-                    AppSection.completadas: _done.length,
-                    AppSection.todas: _tasks.length,
-                  },
+                  onSelect: (s) => setState(() {
+                    _section = s;
+                    _currentProject = null;
+                  }),
+                  projects: _projects,
+                  currentProject: _currentProject,
+                  onSelectProject: (id) => setState(() {
+                    _currentProject = id;
+                    _section = AppSection.todas;
+                  }),
+                  onAddProject: () {},
+                  onOpenSettings: () {},
                 ),
                 Expanded(child: _buildContent()),
               ],
@@ -125,90 +166,132 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _buildContent() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // El timer vive en el shell, así aparece en todas las secciones
-          // y sigue corriendo aunque cambies de una a otra.
-          TimerBar(
-            remaining: _remaining,
-            total: _totalSeconds,
-            running: _running,
-            pickerOpen: _pickerOpen,
-            minCtrl: _minCtrl,
-            secCtrl: _secCtrl,
-            onToggleRun: _toggleRun,
-            onReset: _reset,
-            onTapTime: () => setState(() => _pickerOpen = !_pickerOpen),
-            onDurationChanged: _syncDuration,
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Cabecera: título a la izquierda, timer a la derecha.
+              // El timer vive aquí, así que sigue corriendo al cambiar
+              // de sección o de proyecto.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Row(
+                      children: [
+                        Text(_headerTitle, style: display(42)),
+                        const SizedBox(width: 8),
+                        Text('✦', style: mono(12, color: green)),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, right: 20),
+                    child: Text('☰', style: mono(20, color: inkMuted)),
+                  ),
+                  SizedBox(
+                    width: 660,
+                    child: TimerBar(
+                      remaining: _remaining,
+                      total: _totalSeconds,
+                      running: _running,
+                      pickerOpen: _pickerOpen,
+                      minCtrl: _minCtrl,
+                      secCtrl: _secCtrl,
+                      onToggleRun: _toggleRun,
+                      onReset: _reset,
+                      onTapTime: () =>
+                          setState(() => _pickerOpen = !_pickerOpen),
+                      onDurationChanged: _syncDuration,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              if (_section != AppSection.completadas) ...[
+                _inputBox(),
+                const SizedBox(height: 26),
+              ],
+              Expanded(child: _buildSection()),
+            ],
           ),
-          const SizedBox(height: 22),
-          Expanded(child: _buildSection()),
+        ),
+        const Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: PixelScene('grass'),
+        ),
+      ],
+    );
+  }
+
+  Widget _inputBox() {
+    return PixelBox(
+      fill: cream,
+      border: line,
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _input,
+              autofocus: true,
+              onEditingComplete: () => _addTask(_input.text),
+              style: mono(15, color: ink),
+              decoration: InputDecoration(
+                hintText: 'Escribe y presiona Enter',
+                hintStyle: mono(15, color: inkFaint),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+          PixelBox(
+            fill: cream,
+            border: line,
+            borderWidth: 1.5,
+            unit: 2,
+            child: const SizedBox(
+              width: 36,
+              height: 32,
+              child: Center(child: AppIcon('mic', size: 18, fallback: '🎤')),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSection() {
-    if (_section == AppSection.ajustes) {
-      return const Center(
-        child: Text(
-          'Aquí van las preferencias.',
-          style: TextStyle(color: textColorTertiary, fontSize: 14),
+    if (_section == AppSection.calendario && _currentProject == null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppIcon('calendar', size: 72, fallback: '📅'),
+            const SizedBox(height: 18),
+            Text('Calendario', style: display(32, color: green)),
+            const SizedBox(height: 6),
+            Text('Próximamente.', style: mono(14, color: inkMuted)),
+          ],
         ),
       );
     }
 
-    final showInput = _section != AppSection.completadas;
-    final tasks = switch (_section) {
-      AppSection.hoy => _pending,
-      AppSection.completadas => _done,
-      _ => _ordered,
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          _section.label,
-          style: const TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
-        ),
-        if (showInput) ...[
-          const SizedBox(height: 4),
-          TextField(
-            controller: _input,
-            autofocus: true,
-            onEditingComplete: () => _addTask(_input.text),
-            style: const TextStyle(color: textColor, fontSize: 15),
-            decoration: const InputDecoration(
-              hintText: 'Escribe y presiona Enter',
-              hintStyle: TextStyle(color: textColorDone),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(vertical: 10),
-            ),
-          ),
-          const Divider(height: 1, color: dividerColor),
-        ],
-        const SizedBox(height: 10),
-        Expanded(
-          child: TaskList(
-            tasks: tasks,
-            onToggle: (task, done) => setState(() => task.done = done),
-            emptyTitle: _section == AppSection.completadas
-                ? 'Nada completado aún'
-                : 'Sin tareas',
-            emptyHint: _section == AppSection.completadas
-                ? 'Marca una tarea para verla aquí.'
-                : 'Escribe arriba para agregar la primera.',
-          ),
-        ),
-      ],
+    final completed = _section == AppSection.completadas;
+    return TaskList(
+      tasks: _visible,
+      onToggle: (task, done) => setState(() => task.done = done),
+      emptyTitle: completed ? 'Nada completado' : 'Sin tareas',
+      emptyHint: completed
+          ? 'Marca una tarea para verla aquí.'
+          : 'Escribe arriba para agregar la primera.',
     );
   }
 }

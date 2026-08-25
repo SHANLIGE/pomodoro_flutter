@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import 'app_shell.dart';
 import 'theme.dart';
-import 'app_shell.dart'; 
+import 'widgets/pixel_box.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
   const options = WindowOptions(
-    size: Size(1140, 840),     
-    minimumSize: Size(720, 480),
+    size: Size(1440, 1024),
+    minimumSize: Size(920, 600),
     center: true,
     backgroundColor: Colors.transparent,
     titleBarStyle: TitleBarStyle.hidden,
@@ -24,30 +24,30 @@ Future<void> main() async {
     await windowManager.focus();
   });
 
-  runApp(const PomodoroApp());
+  runApp(const MoriTaimuApp());
 }
 
-class PomodoroApp extends StatelessWidget {
-  const PomodoroApp({super.key});
+class MoriTaimuApp extends StatelessWidget {
+  const MoriTaimuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pomodoro',
+      title: 'Mori Taimu',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        textTheme: GoogleFonts.manropeTextTheme(),
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.transparent,
-        colorScheme: ColorScheme.fromSeed(seedColor: secondaryColor),
+        colorScheme: ColorScheme.fromSeed(seedColor: green),
         scrollbarTheme: ScrollbarThemeData(
-          thumbColor: WidgetStateProperty.all(scrollbarColor),
+          thumbColor: WidgetStateProperty.all(line),
           thickness: WidgetStateProperty.all(8),
-          radius: const Radius.circular(4),
+          radius: Radius.zero,
         ),
       ),
-      home: const ClipRRect(
-        borderRadius: BorderRadius.all(Radius.circular(windowRadius)),
+      // Recorta la ventana con la silueta escalonada en vez de curvas.
+      home: const ClipPath(
+        clipper: PixelClipper(unit: 4),
         child: AppShell(),
       ),
     );

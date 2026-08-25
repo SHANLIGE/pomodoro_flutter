@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import '../task.dart';
 import '../theme.dart';
+import 'pixel_box.dart';
 
 class TaskRow extends StatelessWidget {
   const TaskRow({super.key, required this.task, required this.onToggle});
+
   final Task task;
   final ValueChanged<bool> onToggle;
 
   @override
   Widget build(BuildContext context) {
-    // TweenAnimationBuilder anima solo al cambiar el valor destino.
-    // Es el equivalente de tu QPropertyAnimation, sin controller ni dispose.
+    // Anima solo cuando cambia el valor destino; sin controller ni dispose.
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: task.done ? 1.0 : 0.0),
       duration: const Duration(milliseconds: 320),
@@ -18,8 +19,8 @@ class TaskRow extends StatelessWidget {
       builder: (context, progress, _) {
         return Row(
           children: [
-            _AppCheckbox(value: task.done, onChanged: onToggle),
-            const SizedBox(width: 10),
+            _PixelCheckbox(value: task.done, onChanged: onToggle),
+            const SizedBox(width: 12),
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -27,10 +28,7 @@ class TaskRow extends StatelessWidget {
                   foregroundPainter: _StrikePainter(progress),
                   child: Text(
                     task.text,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color.lerp(textColor, textColorDone, progress),
-                    ),
+                    style: mono(15, color: Color.lerp(ink, inkFaint, progress)!),
                   ),
                 ),
               ),
@@ -42,7 +40,6 @@ class TaskRow extends StatelessWidget {
   }
 }
 
-/// Equivalente exacto de tu StrikeLabel.paintEvent.
 class _StrikePainter extends CustomPainter {
   _StrikePainter(this.progress);
   final double progress;
@@ -51,9 +48,8 @@ class _StrikePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (progress <= 0) return;
     final paint = Paint()
-      ..color = textColorDone
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
+      ..color = inkFaint
+      ..strokeWidth = 2;
     final y = size.height / 2;
     canvas.drawLine(Offset(0, y), Offset(size.width * progress, y), paint);
   }
@@ -62,23 +58,23 @@ class _StrikePainter extends CustomPainter {
   bool shouldRepaint(_StrikePainter old) => old.progress != progress;
 }
 
-class _AppCheckbox extends StatefulWidget {
-  const _AppCheckbox({required this.value, required this.onChanged});
+class _PixelCheckbox extends StatefulWidget {
+  const _PixelCheckbox({required this.value, required this.onChanged});
   final bool value;
   final ValueChanged<bool> onChanged;
 
   @override
-  State<_AppCheckbox> createState() => _AppCheckboxState();
+  State<_PixelCheckbox> createState() => _PixelCheckboxState();
 }
 
-class _AppCheckboxState extends State<_AppCheckbox> {
+class _PixelCheckboxState extends State<_PixelCheckbox> {
   bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
     final borderTone = widget.value
-        ? secondaryColor
-        : (_hover ? secondaryColor : textColorTertiary);
+        ? green
+        : (_hover ? greenBorder : inkFaint);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -86,18 +82,27 @@ class _AppCheckboxState extends State<_AppCheckbox> {
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
         onTap: () => widget.onChanged(!widget.value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          width: 18,
-          height: 18,
-          decoration: BoxDecoration(
-            color: widget.value ? secondaryColor : Colors.transparent,
-            border: Border.all(color: borderTone, width: 1),
-            borderRadius: BorderRadius.circular(4),
+        child: PixelBox(
+          fill: widget.value ? greenBright : Colors.transparent,
+          border: borderTone,
+          borderWidth: 2,
+          unit: 2,
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: widget.value
+                ? const Center(
+                    child: Text(
+                      '✓',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : null,
           ),
-          child: widget.value
-              ? const Icon(Icons.check, size: 13, color: Colors.white)
-              : null,
         ),
       ),
     );

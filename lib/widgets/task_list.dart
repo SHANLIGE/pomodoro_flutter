@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../task.dart';
 import '../theme.dart';
+import 'app_icon.dart';
 import 'task_row.dart';
 
 class TaskList extends StatelessWidget {
@@ -24,19 +25,11 @@ class TaskList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              emptyTitle,
-              style: const TextStyle(
-                fontSize: 15,
-                color: textColorTertiary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              emptyHint,
-              style: const TextStyle(fontSize: 13, color: textColorDone),
-            ),
+            const AppIcon('clipboard', size: 78, fallback: '📋'),
+            const SizedBox(height: 18),
+            Text(emptyTitle, style: display(32, color: green)),
+            const SizedBox(height: 6),
+            Text(emptyHint, style: mono(14, color: inkMuted)),
           ],
         ),
       );
@@ -47,6 +40,8 @@ class TaskList extends StatelessWidget {
         height: tasks.length * taskRowHeight,
         child: Stack(
           children: [
+            // La key por id le dice a Flutter que es el mismo widget
+            // cambiando de sitio, no uno nuevo. Sin ella no hay animación.
             for (var i = 0; i < tasks.length; i++)
               AnimatedPositioned(
                 key: ValueKey(tasks[i].id),

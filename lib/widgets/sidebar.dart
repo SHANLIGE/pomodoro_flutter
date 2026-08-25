@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import 'app_icon.dart';
+import 'pixel_box.dart';
 
-/// Enum "mejorado" de Dart 3: lleva datos adjuntos, no solo un nombre.
+/// Enum con datos adjuntos (Dart 3): cada sección lleva su etiqueta e icono.
 enum AppSection {
-  hoy('Hoy', Icons.wb_twilight_outlined),
-  completadas('Completadas', Icons.done_all_rounded),
-  todas('Todas', Icons.inbox_outlined),
-  ajustes('Ajustes', Icons.tune_rounded);
+  hoy('Hoy', 'seedling', '🌱'),
+  completadas('Completadas', 'check', '✅'),
+  todas('Todas', 'page', '📄'),
+  calendario('Calendario', 'calendar', '📅');
 
-  const AppSection(this.label, this.icon);
+  const AppSection(this.label, this.icon, this.emoji);
   final String label;
-  final IconData icon;
+  final String icon;
+  final String emoji;
+}
+
+class Project {
+  Project(this.id, this.name, this.color);
+  final int id;
+  final String name;
+  final Color color;
 }
 
 class Sidebar extends StatelessWidget {
@@ -18,71 +28,141 @@ class Sidebar extends StatelessWidget {
     super.key,
     required this.current,
     required this.onSelect,
-    required this.counts,
+    required this.projects,
+    required this.currentProject,
+    required this.onSelectProject,
+    required this.onAddProject,
+    required this.onOpenSettings,
   });
 
   final AppSection current;
   final ValueChanged<AppSection> onSelect;
-  final Map<AppSection, int> counts;
+  final List<Project> projects;
+  final int? currentProject;
+  final ValueChanged<int> onSelectProject;
+  final VoidCallback onAddProject;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: sidebarWidth,
-      color: sidebarColor,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      decoration: const BoxDecoration(
+        color: creamSidebar,
+        border: Border(right: BorderSide(color: line, width: 2)),
+      ),
+      child: Stack(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 10, bottom: 14),
-            child: Text(
-              'SECCIONES',
-              style: TextStyle(
-                fontSize: 11,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-                color: textColorDone,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 6, bottom: 12),
+                    child: Text(
+                      'SECCIONES',
+                      style: mono(
+                        13,
+                        color: green,
+                        weight: FontWeight.w700,
+                        spacing: 1.6,
+                      ),
+                    ),
+                  ),
+                  for (final s in AppSection.values)
+                    _NavRow(
+                      label: s.label,
+                      icon: s.icon,
+                      emoji: s.emoji,
+                      selected: s == current && currentProject == null,
+                      onTap: () => onSelect(s),
+                    ),
+                  const SizedBox(height: 26),
+                  _ProjectsHeader(onAdd: onAddProject),
+                  const SizedBox(height: 8),
+                  for (var i = 0; i < projects.length; i++)
+                    _ProjectRow(
+                      project: projects[i],
+                      isLast: i == projects.length - 1,
+                      selected: currentProject == projects[i].id,
+                      onTap: () => onSelectProject(projects[i].id),
+                    ),
+                  const SizedBox(height: 180),
+                ],
               ),
             ),
           ),
-          for (final section in AppSection.values)
-            _SidebarItem(
-              section: section,
-              selected: section == current,
-              count: counts[section],
-              onTap: () => onSelect(section),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: PixelScene('shelf'),
+          ),
+          Positioned(
+            left: 22,
+            bottom: 120,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onOpenSettings,
+                child: Row(
+                  children: [
+                    const AppIcon('gear', size: 22, fallback: '⚙️'),
+                    const SizedBox(width: 10),
+                    Text('Ajustes', style: mono(15, color: ink)),
+                  ],
+                ),
+              ),
             ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _SidebarItem extends StatefulWidget {
-  const _SidebarItem({
-    required this.section,
+class _NavRow extends StatefulWidget {
+  const _NavRow({
+    required this.label,
+    required this.icon,
+    required this.emoji,
     required this.selected,
     required this.onTap,
-    this.count,
   });
 
-  final AppSection section;
+  final String label, icon, emoji;
   final bool selected;
   final VoidCallback onTap;
-  final int? count;
 
   @override
-  State<_SidebarItem> createState() => _SidebarItemState();
+  State<_NavRow> createState() => _NavRowState();
 }
 
-class _SidebarItemState extends State<_SidebarItem> {
+class _NavRowState extends State<_NavRow> {
   bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
     final active = widget.selected;
-    final fg = active ? secondaryColor : textColor;
+    final body = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      child: Row(
+        children: [
+          AppIcon(widget.icon, size: 22, fallback: widget.emoji),
+          const SizedBox(width: 12),
+          Text(
+            widget.label,
+            style: mono(
+              15,
+              color: ink,
+              weight: active ? FontWeight.w700 : FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -90,38 +170,134 @@ class _SidebarItemState extends State<_SidebarItem> {
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
+        child: Container(
           margin: const EdgeInsets.only(bottom: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-          decoration: BoxDecoration(
-            color: active
-                ? primaryColor.withValues(alpha: 0.45)
-                : (_hover ? hoverSurface : Colors.transparent),
-            borderRadius: BorderRadius.circular(10),
+          child: active
+              ? PixelBox(fill: greenSoft, border: greenBorder, child: body)
+              : Container(
+                  color:
+                      _hover ? line.withValues(alpha: 0.35) : Colors.transparent,
+                  child: body,
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProjectsHeader extends StatelessWidget {
+  const _ProjectsHeader({required this.onAdd});
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return PixelBox(
+      fill: cream,
+      border: line,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      child: Row(
+        children: [
+          const AppIcon('folder', size: 20, fallback: '🗂️'),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Proyects',
+              style: mono(15, color: ink, weight: FontWeight.w700),
+            ),
           ),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: onAdd,
+              child: Text('+', style: mono(20, color: inkMuted)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Guía punteada vertical con la ramita horizontal hacia cada proyecto.
+class _TreePainter extends CustomPainter {
+  _TreePainter({required this.isLast});
+  final bool isLast;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = inkFaint
+      ..strokeWidth = 1.4;
+    final midY = size.height / 2;
+    const x = 8.0;
+
+    final end = isLast ? midY : size.height;
+    for (double y = 0; y < end; y += 5) {
+      canvas.drawLine(Offset(x, y), Offset(x, (y + 2.5).clamp(0, end)), p);
+    }
+    for (double dx = x; dx < size.width; dx += 5) {
+      canvas.drawLine(Offset(dx, midY), Offset(dx + 2.5, midY), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TreePainter old) => old.isLast != isLast;
+}
+
+class _ProjectRow extends StatefulWidget {
+  const _ProjectRow({
+    required this.project,
+    required this.isLast,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Project project;
+  final bool isLast, selected;
+  final VoidCallback onTap;
+
+  @override
+  State<_ProjectRow> createState() => _ProjectRowState();
+}
+
+class _ProjectRowState extends State<_ProjectRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: SizedBox(
+          height: 40,
           child: Row(
             children: [
-              Icon(widget.section.icon, size: 17, color: fg),
+              SizedBox(
+                width: 30,
+                height: 40,
+                child:
+                    CustomPaint(painter: _TreePainter(isLast: widget.isLast)),
+              ),
+              PixelBox(
+                fill: widget.project.color,
+                border: ink.withValues(alpha: 0.35),
+                borderWidth: 1.5,
+                unit: 2,
+                child: const SizedBox(width: 20, height: 16),
+              ),
               const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  widget.section.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: fg,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                  ),
+              Text(
+                widget.project.name,
+                style: mono(
+                  14,
+                  color: _hover || widget.selected ? ink : inkMuted,
+                  weight:
+                      widget.selected ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
-              if (widget.count != null && widget.count! > 0)
-                Text(
-                  '${widget.count}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: active ? secondaryColor : textColorDone,
-                  ),
-                ),
             ],
           ),
         ),

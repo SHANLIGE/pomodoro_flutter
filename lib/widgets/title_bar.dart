@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import '../theme.dart';
+import 'app_icon.dart';
 
 class TitleBar extends StatelessWidget {
   const TitleBar({super.key});
@@ -9,25 +10,20 @@ class TitleBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return DragToMoveArea(
       child: Container(
-        height: 40,
+        height: 52,
         decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: borderColor, width: 1.2)),
+          color: creamBar,
+          border: Border(bottom: BorderSide(color: line, width: 2)),
         ),
-        padding: const EdgeInsets.only(left: 14, right: 4),
+        padding: const EdgeInsets.only(left: 16, right: 8),
         child: Row(
           children: [
-            const Text(
-              'Pomodoro timer',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: titleBarTextColor,
-              ),
-            ),
+            const AppIcon('cat', size: 26, fallback: '🐈'),
+            const SizedBox(width: 10),
+            Text('Mori Taimu', style: display(28)),
             const Spacer(),
-            _WindowButton(label: '—', onTap: windowManager.minimize),
-            _WindowButton(label: '✕', onTap: windowManager.close),
+            _WinBtn(label: '—', onTap: windowManager.minimize),
+            _WinBtn(label: '✕', onTap: windowManager.close),
           ],
         ),
       ),
@@ -35,16 +31,16 @@ class TitleBar extends StatelessWidget {
   }
 }
 
-class _WindowButton extends StatefulWidget {
-  const _WindowButton({required this.label, required this.onTap});
+class _WinBtn extends StatefulWidget {
+  const _WinBtn({required this.label, required this.onTap});
   final String label;
   final VoidCallback onTap;
 
   @override
-  State<_WindowButton> createState() => _WindowButtonState();
+  State<_WinBtn> createState() => _WinBtnState();
 }
 
-class _WindowButtonState extends State<_WindowButton> {
+class _WinBtnState extends State<_WinBtn> {
   bool _hover = false;
 
   @override
@@ -55,23 +51,12 @@ class _WindowButtonState extends State<_WindowButton> {
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          width: 32,
-          height: 28,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
+        child: Container(
+          width: 42,
+          height: 34,
           alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _hover ? titleBarHoverColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            widget.label,
-            style: TextStyle(
-              fontSize: 14,
-              color: _hover ? Colors.white : titleBarTextColor,
-            ),
-          ),
+          color: _hover ? line.withValues(alpha: 0.5) : Colors.transparent,
+          child: Text(widget.label, style: mono(15, color: ink)),
         ),
       ),
     );
