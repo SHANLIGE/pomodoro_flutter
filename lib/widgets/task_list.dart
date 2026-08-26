@@ -12,10 +12,12 @@ class TaskList extends StatelessWidget {
     required this.onToggle,
     required this.emptyTitle,
     required this.emptyHint,
+    required this.onDelete,
   });
 
   final List<Task> tasks;
   final void Function(Task task, bool done) onToggle;
+  final void Function(Task task) onDelete;
   final String emptyTitle;
   final String emptyHint;
 
@@ -26,7 +28,7 @@ class TaskList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon('clipboard', size: 78),
+            const AppIcon('play-solid', size: 78),
             const SizedBox(height: 18),
             Text(emptyTitle, style: display(32, color: green)),
             const SizedBox(height: 6),
@@ -55,6 +57,7 @@ class TaskList extends StatelessWidget {
                 child: TaskRow(
                   task: tasks[i],
                   onToggle: (v) => onToggle(tasks[i], v),
+                  onDelete: () => onDelete(tasks[i]),
                 ),
               ),
           ],

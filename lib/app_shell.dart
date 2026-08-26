@@ -76,6 +76,9 @@ class _AppShellState extends State<AppShell> {
     _input.clear();
   }
 
+  void _deleteTask(Task task) {
+    setState(() => _tasks.remove(task));
+  }
   // --- Timer ---
 
   void _syncDuration() {
@@ -225,6 +228,7 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
+  //icono microfono
   Widget _inputBox() {
     return PixelBox(
       fill: cream,
@@ -282,6 +286,7 @@ class _AppShellState extends State<AppShell> {
     return TaskList(
       tasks: _visible,
       onToggle: (task, done) => setState(() => task.done = done),
+      onDelete: _deleteTask,
       emptyTitle: completed ? 'Nada completado' : 'Sin tareas',
       emptyHint: completed
           ? 'Marca una tarea para verla aquí.'

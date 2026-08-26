@@ -18,7 +18,7 @@ class Iconblock extends StatelessWidget {
       height: size,
       filterQuality: FilterQuality.none,
       isAntiAlias: false,
-      errorBuilder: (_, __, ___) => SizedBox(width: size, height: size),
+      errorBuilder: (_, _, _) => SizedBox(width: size, height: size),
     );
   }
 }
@@ -38,7 +38,7 @@ class AppIcon extends StatelessWidget {
       // Sin esto Flutter interpola al escalar y el pixel art se ve borroso.
       filterQuality: FilterQuality.none,
       isAntiAlias: false,
-      errorBuilder: (_, __, ___) => SizedBox(width: size, height: size),
+      errorBuilder: (_, _, _) => SizedBox(width: size, height: size),
     );
   }
 }
@@ -56,7 +56,7 @@ class PixelScene extends StatelessWidget {
         fit: BoxFit.fitWidth,
         filterQuality: FilterQuality.none,
         isAntiAlias: false,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
       ),
     );
   }

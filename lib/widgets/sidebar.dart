@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
@@ -6,9 +8,9 @@ import 'pixel_box.dart';
 
 /// Enum con datos adjuntos (Dart 3): cada sección lleva su etiqueta e icono.
 enum AppSection {
-  hoy('Hoy', 'trash'),
-  completadas('Completadas', '✅'),
-  todas('Todas', '📄'),
+  hoy('Hoy', 'hoy'),
+  completadas('Completadas', 'completadas'),
+  todas('Todas', 'todas'),
   calendario('Calendario', '📅');
 
   const AppSection(this.label, this.image);
@@ -142,7 +144,7 @@ class _NavRow extends StatefulWidget {
 
 class _NavRowState extends State<_NavRow> {
   bool _hover = false;
-
+  //size general de los iconos del sidebar
   @override
   Widget build(BuildContext context) {
     final active = widget.selected;
@@ -150,12 +152,12 @@ class _NavRowState extends State<_NavRow> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       child: Row(
         children: [
-          AppIcon(widget.image, size: 22),
-          const SizedBox(width: 12),
+          AppIcon(widget.image, size: 38),
+          const SizedBox(width: 8),
           Text(
             widget.label,
             style: mono(
-              15,
+              17,
               color: ink,
               weight: active ? FontWeight.w700 : FontWeight.w400,
             ),
