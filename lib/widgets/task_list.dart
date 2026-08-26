@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../task.dart';
 import '../theme.dart';
 import 'app_icon.dart';
@@ -25,7 +26,7 @@ class TaskList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon('clipboard', size: 78, fallback: '📋'),
+            const AppIcon('clipboard', size: 78),
             const SizedBox(height: 18),
             Text(emptyTitle, style: display(32, color: green)),
             const SizedBox(height: 6),

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
+
 import '../theme.dart';
 import 'app_icon.dart';
 import 'pixel_box.dart';
 
 /// Enum con datos adjuntos (Dart 3): cada sección lleva su etiqueta e icono.
 enum AppSection {
-  hoy('Hoy', 'seedling', '🌱'),
-  completadas('Completadas', 'check', '✅'),
-  todas('Todas', 'page', '📄'),
-  calendario('Calendario', 'calendar', '📅');
+  hoy('Hoy', 'trash'),
+  completadas('Completadas', '✅'),
+  todas('Todas', '📄'),
+  calendario('Calendario', '📅');
 
-  const AppSection(this.label, this.icon, this.emoji);
+  const AppSection(this.label, this.image);
   final String label;
-  final String icon;
-  final String emoji;
+  final String image;
 }
 
 class Project {
@@ -74,8 +74,8 @@ class Sidebar extends StatelessWidget {
                   for (final s in AppSection.values)
                     _NavRow(
                       label: s.label,
-                      icon: s.icon,
-                      emoji: s.emoji,
+                      emoji: '',
+                      image: s.image,
                       selected: s == current && currentProject == null,
                       onTap: () => onSelect(s),
                     ),
@@ -109,7 +109,7 @@ class Sidebar extends StatelessWidget {
                 onTap: onOpenSettings,
                 child: Row(
                   children: [
-                    const AppIcon('gear', size: 22, fallback: '⚙️'),
+                    const AppIcon('gear', size: 22),
                     const SizedBox(width: 10),
                     Text('Ajustes', style: mono(15, color: ink)),
                   ],
@@ -126,13 +126,13 @@ class Sidebar extends StatelessWidget {
 class _NavRow extends StatefulWidget {
   const _NavRow({
     required this.label,
-    required this.icon,
+    required this.image,
     required this.emoji,
     required this.selected,
     required this.onTap,
   });
 
-  final String label, icon, emoji;
+  final String label, image, emoji;
   final bool selected;
   final VoidCallback onTap;
 
@@ -150,7 +150,7 @@ class _NavRowState extends State<_NavRow> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       child: Row(
         children: [
-          AppIcon(widget.icon, size: 22, fallback: widget.emoji),
+          AppIcon(widget.image, size: 22),
           const SizedBox(width: 12),
           Text(
             widget.label,
@@ -175,8 +175,9 @@ class _NavRowState extends State<_NavRow> {
           child: active
               ? PixelBox(fill: greenSoft, border: greenBorder, child: body)
               : Container(
-                  color:
-                      _hover ? line.withValues(alpha: 0.35) : Colors.transparent,
+                  color: _hover
+                      ? line.withValues(alpha: 0.35)
+                      : Colors.transparent,
                   child: body,
                 ),
         ),
@@ -197,7 +198,7 @@ class _ProjectsHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       child: Row(
         children: [
-          const AppIcon('folder', size: 20, fallback: '🗂️'),
+          const AppIcon('folder', size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -278,8 +279,9 @@ class _ProjectRowState extends State<_ProjectRow> {
               SizedBox(
                 width: 30,
                 height: 40,
-                child:
-                    CustomPaint(painter: _TreePainter(isLast: widget.isLast)),
+                child: CustomPaint(
+                  painter: _TreePainter(isLast: widget.isLast),
+                ),
               ),
               PixelBox(
                 fill: widget.project.color,
@@ -294,8 +296,7 @@ class _ProjectRowState extends State<_ProjectRow> {
                 style: mono(
                   14,
                   color: _hover || widget.selected ? ink : inkMuted,
-                  weight:
-                      widget.selected ? FontWeight.w700 : FontWeight.w400,
+                  weight: widget.selected ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
             ],

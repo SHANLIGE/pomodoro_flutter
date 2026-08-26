@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'task.dart';
@@ -25,7 +26,7 @@ class _AppShellState extends State<AppShell> {
   AppSection _section = AppSection.hoy;
   int? _currentProject;
 
-  final _projects = [
+  final _proyectos = [
     Project(0, 'Project 1', projectPink),
     Project(1, 'Project 2', projectBlue),
     Project(2, 'Project 3', projectRed),
@@ -62,10 +63,7 @@ class _AppShellState extends State<AppShell> {
     return switch (_section) {
       AppSection.hoy => base.where((t) => !t.done).toList(),
       AppSection.completadas => base.where((t) => t.done).toList(),
-      _ => [
-          ...base.where((t) => !t.done),
-          ...base.where((t) => t.done),
-        ],
+      _ => [...base.where((t) => !t.done), ...base.where((t) => t.done)],
     };
   }
 
@@ -73,11 +71,7 @@ class _AppShellState extends State<AppShell> {
     final text = raw.trim();
     if (text.isEmpty) return;
     setState(() {
-      _tasks.add(Task(
-        id: _nextId++,
-        text: text,
-        projectId: _currentProject,
-      ));
+      _tasks.add(Task(id: _nextId++, text: text, projectId: _currentProject));
     });
     _input.clear();
   }
@@ -125,7 +119,7 @@ class _AppShellState extends State<AppShell> {
 
   String get _headerTitle {
     if (_currentProject != null) {
-      return _projects.firstWhere((p) => p.id == _currentProject).name;
+      return _proyectos.firstWhere((p) => p.id == _currentProject).name;
     }
     return _section.label;
   }
@@ -147,7 +141,7 @@ class _AppShellState extends State<AppShell> {
                     _section = s;
                     _currentProject = null;
                   }),
-                  projects: _projects,
+                  projects: _proyectos,
                   currentProject: _currentProject,
                   onSelectProject: (id) => setState(() {
                     _currentProject = id;
@@ -260,7 +254,7 @@ class _AppShellState extends State<AppShell> {
             child: const SizedBox(
               width: 36,
               height: 32,
-              child: Center(child: AppIcon('mic', size: 18, fallback: '🎤')),
+              child: Center(child: Iconblock('trash')),
             ),
           ),
         ],
@@ -274,7 +268,7 @@ class _AppShellState extends State<AppShell> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon('calendar', size: 72, fallback: '📅'),
+            const AppIcon('calendar', size: 72),
             const SizedBox(height: 18),
             Text('Calendario', style: display(32, color: green)),
             const SizedBox(height: 6),

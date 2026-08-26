@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../theme.dart';
 import 'app_icon.dart';
 import 'pixel_box.dart';
@@ -80,10 +81,8 @@ class TimerBar extends StatelessWidget {
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: _progress.clamp(0.0, 1.0)),
               duration: const Duration(milliseconds: 350),
-              builder: (context, v, _) => CustomPaint(
-                painter: _SegmentBar(v),
-                size: Size.infinite,
-              ),
+              builder: (context, v, _) =>
+                  CustomPaint(painter: _SegmentBar(v), size: Size.infinite),
             ),
           ),
           // AnimatedSize interpola la altura al abrir y cerrar los pickers.
@@ -103,38 +102,38 @@ class TimerBar extends StatelessWidget {
   }
 
   Widget _pickers() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _wheel(minCtrl),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(':', style: display(32, color: inkMuted)),
-          ),
-          _wheel(secCtrl),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      _wheel(minCtrl),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Text(':', style: display(32, color: inkMuted)),
+      ),
+      _wheel(secCtrl),
+    ],
+  );
 
   Widget _wheel(FixedExtentScrollController c) => SizedBox(
-        width: 76,
-        child: CupertinoPicker(
-          itemExtent: 34,
-          scrollController: c,
-          squeeze: 1.1,
-          selectionOverlay: const CupertinoPickerDefaultSelectionOverlay(
-            background: Color(0x1A3F9142),
-          ),
-          onSelectedItemChanged: (_) => onDurationChanged(),
-          children: List.generate(
-            60,
-            (i) => Center(
-              child: Text(
-                i.toString().padLeft(2, '0'),
-                style: display(30, color: ink),
-              ),
-            ),
+    width: 76,
+    child: CupertinoPicker(
+      itemExtent: 34,
+      scrollController: c,
+      squeeze: 1.1,
+      selectionOverlay: const CupertinoPickerDefaultSelectionOverlay(
+        background: Color(0x1A3F9142),
+      ),
+      onSelectedItemChanged: (_) => onDurationChanged(),
+      children: List.generate(
+        60,
+        (i) => Center(
+          child: Text(
+            i.toString().padLeft(2, '0'),
+            style: display(30, color: ink),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Barra de progreso hecha de bloques sueltos, no de una línea continua.
@@ -198,13 +197,7 @@ class _PixelBtnState extends State<_PixelBtn> {
           child: SizedBox(
             width: 46,
             height: 40,
-            child: Center(
-              child: AppIcon(
-                widget.icon,
-                size: 20,
-                fallback: widget.fallback,
-              ),
-            ),
+            child: Center(child: AppIcon(widget.icon, size: 20)),
           ),
         ),
       ),

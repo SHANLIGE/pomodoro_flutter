@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+
 import '../theme.dart';
 import 'app_icon.dart';
 
@@ -18,7 +19,7 @@ class TitleBar extends StatelessWidget {
         padding: const EdgeInsets.only(left: 16, right: 8),
         child: Row(
           children: [
-            const AppIcon('cat', size: 26, fallback: '🐈'),
+            const AppIcon('logo', size: 26),
             const SizedBox(width: 10),
             Text('Mori Taimu', style: display(28)),
             const Spacer(),
