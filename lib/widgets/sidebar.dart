@@ -202,7 +202,7 @@ class _ProjectsHeader extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Proyects',
+              'Proyectos',
               style: mono(15, color: ink, weight: FontWeight.w700),
             ),
           ),
