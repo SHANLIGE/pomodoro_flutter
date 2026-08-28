@@ -19,6 +19,19 @@ const line = Color(0xFFD8D3C4);
 const projectPink = Color(0xFFE86FA8);
 const projectBlue = Color(0xFF5B7CE8);
 const projectRed = Color(0xFFE05A4A);
+const projectAmber = Color(0xFFE8A33D);
+const projectTeal = Color(0xFF3DA89B);
+const projectPurple = Color(0xFF8B6FD4);
+
+/// Colores que se van repartiendo entre proyectos nuevos.
+const projectPalette = [
+  projectPink,
+  projectBlue,
+  projectRed,
+  projectAmber,
+  projectTeal,
+  projectPurple,
+];
 
 // --- Medidas ---
 const px = 3.0; // unidad de "pixel" para los bordes escalonados
@@ -40,11 +53,10 @@ TextStyle mono(
   Color color = ink,
   FontWeight weight = FontWeight.w400,
   double spacing = 0,
-}) =>
-    GoogleFonts.kodeMono(
-      fontSize: size,
-      color: color,
-      fontWeight: weight,
-      letterSpacing: spacing,
-      height: 1.35,
-    );
+}) => GoogleFonts.kodeMono(
+  fontSize: size,
+  color: color,
+  fontWeight: weight,
+  letterSpacing: spacing,
+  height: 1.35,
+);

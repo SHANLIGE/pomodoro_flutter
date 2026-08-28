@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'widgets/project_dialog.dart';
+
 import 'package:flutter/material.dart';
 
 import 'task.dart';
@@ -26,11 +28,8 @@ class _AppShellState extends State<AppShell> {
   AppSection _section = AppSection.hoy;
   int? _currentProject;
 
-  final _proyectos = [
-    Project(0, 'Project 1', projectPink),
-    Project(1, 'Project 2', projectBlue),
-    Project(2, 'Project 3', projectRed),
-  ];
+  final _projects = <Project>[];
+  int _nextProjectId = 0;
 
   final _minCtrl = FixedExtentScrollController(initialItem: 25);
   final _secCtrl = FixedExtentScrollController(initialItem: 0);
@@ -74,6 +73,20 @@ class _AppShellState extends State<AppShell> {
       _tasks.add(Task(id: _nextId++, text: text, projectId: _currentProject));
     });
     _input.clear();
+  }
+
+  Future<void> _addProject() async {
+    final name = await showProjectDialog(context);
+    if (name == null) return;
+
+    setState(() {
+      final id = _nextProjectId++;
+      // El color se reparte cíclicamente por la paleta.
+      final color = projectPalette[id % projectPalette.length];
+      _projects.add(Project(id, name, color));
+      _currentProject = id;
+      _section = AppSection.todas;
+    });
   }
 
   void _deleteTask(Task task) {
@@ -122,7 +135,8 @@ class _AppShellState extends State<AppShell> {
 
   String get _headerTitle {
     if (_currentProject != null) {
-      return _proyectos.firstWhere((p) => p.id == _currentProject).name;
+      final match = _projects.where((p) => p.id == _currentProject);
+      if (match.isNotEmpty) return match.first.name;
     }
     return _section.label;
   }
@@ -144,13 +158,13 @@ class _AppShellState extends State<AppShell> {
                     _section = s;
                     _currentProject = null;
                   }),
-                  projects: _proyectos,
+                  projects: _projects,
                   currentProject: _currentProject,
                   onSelectProject: (id) => setState(() {
                     _currentProject = id;
                     _section = AppSection.todas;
                   }),
-                  onAddProject: () {},
+                  onAddProject: _addProject,
                   onOpenSettings: () {},
                 ),
                 Expanded(child: _buildContent()),
