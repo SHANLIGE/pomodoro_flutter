@@ -198,7 +198,7 @@ class _ProjectsHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       child: Row(
         children: [
-          const AppIcon('folder', size: 20),
+          const AppIcon('projects', size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
