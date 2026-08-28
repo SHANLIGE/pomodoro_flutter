@@ -6,10 +6,10 @@ import 'pixel_box.dart';
 
 /// Enum con datos adjuntos (Dart 3): cada sección lleva su etiqueta e icono.
 enum AppSection {
-  hoy('Hoy', 'hoy'),
-  completadas('Completadas', 'completadas'),
-  todas('Todas', 'todas'),
-  calendario('Calendario', '📅');
+  hoy('Hoy', 'today'),
+  completadas('Completadas', 'complete'),
+  todas('Todas', 'all'),
+  calendario('Calendario', 'calendar');
 
   const AppSection(this.label, this.image);
   final String label;
