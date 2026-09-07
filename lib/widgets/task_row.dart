@@ -49,18 +49,23 @@ class _TaskRowState extends State<TaskRow> {
                 onChanged: widget.onToggle,
               ),
               const SizedBox(width: 12),
-              // Flexible + ellipsis: el texto largo se corta en vez de
-              // desbordar la fila.
+              // Clic en el texto abre el editor, como en Notion.
               Flexible(
-                child: CustomPaint(
-                  foregroundPainter: _StrikePainter(progress),
-                  child: Text(
-                    widget.task.text,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: mono(
-                      15,
-                      color: Color.lerp(ink, inkFaint, progress)!,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: widget.onEdit,
+                    child: CustomPaint(
+                      foregroundPainter: _StrikePainter(progress),
+                      child: Text(
+                        widget.task.text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: mono(
+                          15,
+                          color: Color.lerp(ink, inkFaint, progress)!,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -167,6 +172,8 @@ class _PixelCheckbox extends StatefulWidget {
   @override
   State<_PixelCheckbox> createState() => _PixelCheckboxState();
 }
+
+
 
 class _PixelCheckboxState extends State<_PixelCheckbox> {
   bool _hover = false;

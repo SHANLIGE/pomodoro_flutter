@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../task.dart';
 import '../theme.dart';
-import 'pixel_box.dart';
+import 'date_editor.dart';
 import 'pixel_ui.dart';
 
 // ------------------------------------------------------------- nombre
@@ -148,29 +148,6 @@ class _TaskDialogState extends State<_TaskDialog> {
     super.dispose();
   }
 
-  /// Pide primero el día y luego la hora. Si se cancela la hora, queda como
-  /// fecha sin hora, útil para un vencimiento de día completo.
-  Future<DateTime?> _pick(DateTime? initial) async {
-    final base = initial ?? DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: base,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-    if (date == null) return null;
-    if (!mounted) return null;
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime: initial != null
-          ? TimeOfDay.fromDateTime(initial)
-          : const TimeOfDay(hour: 9, minute: 0),
-    );
-    if (time == null) return DateTime(date.year, date.month, date.day);
-    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
-  }
-
   void _save() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -210,92 +187,17 @@ class _TaskDialogState extends State<_TaskDialog> {
             onSubmitted: (_) => _save(),
           ),
           const SizedBox(height: 16),
-          _DateRow(
-            label: 'Inicio',
-            value: _start,
-            onPick: () async {
-              final d = await _pick(_start);
-              if (d != null) setState(() => _start = d);
+          // El editor avisa en cada cambio; el diálogo solo guarda el estado.
+          DateEditor(
+            start: _start,
+            end: _end,
+            onChanged: (s, e) {
+              _start = s;
+              _end = e;
             },
-            onClear: () => setState(() => _start = null),
-          ),
-          const SizedBox(height: 8),
-          _DateRow(
-            label: 'Vence',
-            value: _end,
-            onPick: () async {
-              final d = await _pick(_end);
-              if (d != null) setState(() => _end = d);
-            },
-            onClear: () => setState(() => _end = null),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Deja el inicio vacío si solo quieres una fecha de vencimiento.',
-            style: mono(12, color: inkFaint),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DateRow extends StatelessWidget {
-  const _DateRow({
-    required this.label,
-    required this.value,
-    required this.onPick,
-    required this.onClear,
-  });
-
-  final String label;
-  final DateTime? value;
-  final VoidCallback onPick, onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 68,
-          child: Text(label, style: mono(14, color: inkMuted)),
-        ),
-        Expanded(
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: onPick,
-              child: PixelBox(
-                fill: Colors.white,
-                border: value != null ? greenBorder : line,
-                borderWidth: 1.5,
-                unit: 2,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Text(
-                  value != null ? Task.fmtShort(value!) : 'Sin fecha',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: mono(14, color: value != null ? ink : inkFaint),
-                ),
-              ),
-            ),
-          ),
-        ),
-        if (value != null) ...[
-          const SizedBox(width: 6),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: onClear,
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: Text('✕', style: mono(13, color: inkMuted)),
-              ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

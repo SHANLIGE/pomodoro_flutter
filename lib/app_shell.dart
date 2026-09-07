@@ -93,6 +93,21 @@ class _AppShellState extends State<AppShell> {
       }
     });
   }
+    /// Crea una tarea vacía en ese día y abre el editor de una vez.
+  Future<void> _addTaskOnDate(DateTime day) async {
+    final task = Task(
+      id: _nextId++,
+      text: 'Nueva tarea',
+      projectId: _currentProject,
+      start: day,
+    );
+    setState(() => _tasks.add(task));
+    await _editTask(task);
+    // Si se canceló sin cambiar nada, no dejamos basura.
+    if (task.text == 'Nueva tarea' && mounted) {
+      setState(() => _tasks.remove(task));
+    }
+  }
 
   // --------------------------------------------------------- proyectos
 
@@ -200,7 +215,11 @@ class _AppShellState extends State<AppShell> {
     }
     return _section.label;
   }
-
+  Color _colorOf(Task task) {
+    final match = _projects.where((p) => p.id == task.projectId);
+    return match.isEmpty ? green : match.first.color;
+  }
+  
   bool get _showInput =>
       !_settingsOpen &&
       _section != AppSection.completadas &&
@@ -308,6 +327,7 @@ class _AppShellState extends State<AppShell> {
                 const SizedBox(height: 26),
               ],
               Expanded(child: _buildSection()),
+              
             ],
           ),
         ),
@@ -358,14 +378,15 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  Widget _buildSection() {
+      Widget _buildSection() {
     if (_settingsOpen) return const SettingsView();
 
     if (_section == AppSection.calendario && _currentProject == null) {
       return CalendarView(
         tasks: _tasks.where((t) => t.hasSchedule).toList(),
-        onToggle: (task, done) => setState(() => task.done = done),
+        colorOf: _colorOf,
         onEdit: _editTask,
+        onAddOnDate: _addTaskOnDate,
       );
     }
 

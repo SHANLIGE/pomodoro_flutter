@@ -3,19 +3,22 @@ import '../date_utils.dart';
 import '../task.dart';
 import '../theme.dart';
 import 'pixel_box.dart';
-import 'task_row.dart';
 
+/// Vista mensual estilo Notion: las tareas se ven dentro de su día,
+/// no como puntos. Cada celda crece con el alto disponible.
 class CalendarView extends StatefulWidget {
   const CalendarView({
     super.key,
     required this.tasks,
-    required this.onToggle,
+    required this.colorOf,
     required this.onEdit,
+    required this.onAddOnDate,
   });
 
   final List<Task> tasks;
-  final void Function(Task task, bool done) onToggle;
+  final Color Function(Task) colorOf;
   final void Function(Task task) onEdit;
+  final void Function(DateTime day) onAddOnDate;
 
   @override
   State<CalendarView> createState() => _CalendarViewState();
@@ -23,197 +26,285 @@ class CalendarView extends StatefulWidget {
 
 class _CalendarViewState extends State<CalendarView> {
   late DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
-  DateTime _selected = dayOnly(DateTime.now());
 
-  /// Agrupa las tareas con fecha por día, para pintar los puntos.
+  /// Una tarea con rango aparece en todos los días que abarca.
   Map<DateTime, List<Task>> get _byDay {
     final map = <DateTime, List<Task>>{};
     for (final t in widget.tasks) {
-      final day = t.anchorDay;
-      if (day == null) continue;
-      map.putIfAbsent(day, () => []).add(t);
+      final s = t.start ?? t.end;
+      if (s == null) continue;
+      final from = dayOnly(s);
+      final to = t.end == null ? from : dayOnly(t.end!);
+      var d = from;
+      while (!d.isAfter(to)) {
+        map.putIfAbsent(d, () => []).add(t);
+        d = DateTime(d.year, d.month, d.day + 1);
+      }
     }
     return map;
-  }
-
-  void _shiftMonth(int delta) {
-    setState(() => _month = DateTime(_month.year, _month.month + delta));
   }
 
   @override
   Widget build(BuildContext context) {
     final byDay = _byDay;
-    final dayTasks = byDay[_selected] ?? [];
+    final days = monthGrid(_month);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(width: 380, child: _grid(byDay)),
-        const SizedBox(width: 28),
-        Expanded(child: _dayPanel(dayTasks)),
+        _header(),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            for (final w in weekdayShort)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6, bottom: 6),
+                  child: Text(w, style: mono(11, color: inkFaint)),
+                ),
+              ),
+          ],
+        ),
+        Expanded(
+          child: PixelBox(
+            fill: cream,
+            border: line,
+            padding: const EdgeInsets.all(6),
+            child: Column(
+              children: [
+                for (var r = 0; r < 6; r++)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        for (var c = 0; c < 7; c++)
+                          Expanded(child: _cell(days[r * 7 + c], byDay)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _grid(Map<DateTime, List<Task>> byDay) {
-    // weekday: 1=lunes ... 7=domingo. Restamos 1 para el offset de la grilla.
-    final first = DateTime(_month.year, _month.month, 1);
-    final offset = first.weekday - 1;
-    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
-    final rows = ((offset + daysInMonth) / 7).ceil();
-
-    return PixelBox(
-      fill: cream,
-      border: line,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              _arrow('◀', () => _shiftMonth(-1)),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    '${monthNames[_month.month - 1]} ${_month.year}',
-                    style: display(26, color: ink),
-                  ),
-                ),
-              ),
-              _arrow('▶', () => _shiftMonth(1)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              for (final w in weekdayShort)
-                Expanded(
-                  child: Center(
-                    child: Text(w, style: mono(11, color: inkFaint)),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          for (var r = 0; r < rows; r++)
-            Row(
-              children: [
-                for (var c = 0; c < 7; c++)
-                  Expanded(child: _cell(r * 7 + c - offset + 1, byDay)),
-              ],
-            ),
-        ],
-      ),
+  Widget _header() {
+    return Row(
+      children: [
+        Text(
+          '${monthNames[_month.month - 1]} ${_month.year}',
+          style: display(30, color: ink),
+        ),
+        const SizedBox(width: 14),
+        _navBtn('◀', () => setState(
+              () => _month = DateTime(_month.year, _month.month - 1),
+            )),
+        const SizedBox(width: 4),
+        _navBtn('▶', () => setState(
+              () => _month = DateTime(_month.year, _month.month + 1),
+            )),
+        const SizedBox(width: 8),
+        _navBtn('Hoy', () {
+          final n = DateTime.now();
+          setState(() => _month = DateTime(n.year, n.month));
+        }, wide: true),
+      ],
     );
   }
 
-  Widget _arrow(String glyph, VoidCallback onTap) {
+  Widget _navBtn(String label, VoidCallback onTap, {bool wide = false}) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Text(glyph, style: mono(13, color: inkMuted)),
+        child: PixelBox(
+          fill: cream,
+          border: line,
+          borderWidth: 1.5,
+          unit: 2,
+          padding: EdgeInsets.symmetric(horizontal: wide ? 12 : 9, vertical: 7),
+          child: Text(label, style: mono(12, color: inkMuted)),
         ),
       ),
     );
   }
 
-  Widget _cell(int day, Map<DateTime, List<Task>> byDay) {
-    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
-    if (day < 1 || day > daysInMonth) return const SizedBox(height: 44);
+  Widget _cell(DateTime day, Map<DateTime, List<Task>> byDay) {
+    final outside = !sameMonth(day, _month);
+    final isToday = sameDay(day, DateTime.now());
+    final tasks = byDay[day] ?? [];
 
-    final date = DateTime(_month.year, _month.month, day);
-    final isSelected = sameDay(date, _selected);
-    final isToday = sameDay(date, DateTime.now());
-    final count = byDay[date]?.length ?? 0;
+    return _DayCell(
+      day: day,
+      outside: outside,
+      isToday: isToday,
+      tasks: tasks,
+      colorOf: widget.colorOf,
+      onEdit: widget.onEdit,
+      onAdd: () => widget.onAddOnDate(day),
+    );
+  }
+}
 
+class _DayCell extends StatefulWidget {
+  const _DayCell({
+    required this.day,
+    required this.outside,
+    required this.isToday,
+    required this.tasks,
+    required this.colorOf,
+    required this.onEdit,
+    required this.onAdd,
+  });
+
+  final DateTime day;
+  final bool outside, isToday;
+  final List<Task> tasks;
+  final Color Function(Task) colorOf;
+  final void Function(Task) onEdit;
+  final VoidCallback onAdd;
+
+  @override
+  State<_DayCell> createState() => _DayCellState();
+}
+
+class _DayCellState extends State<_DayCell> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => setState(() => _selected = date),
-        child: SizedBox(
-          height: 44,
-          child: Center(
-            child: PixelBox(
-              fill: isSelected ? greenSoft : Colors.transparent,
-              border: isSelected
-                  ? greenBorder
-                  : (isToday ? inkFaint : Colors.transparent),
-              borderWidth: 1.5,
-              unit: 2,
-              child: SizedBox(
-                width: 38,
-                height: 38,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$day',
-                      style: mono(
-                        13,
-                        color: isSelected ? green : ink,
-                        weight: isToday ? FontWeight.w700 : FontWeight.w400,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Container(
+        margin: const EdgeInsets.all(1),
+        decoration: BoxDecoration(
+          color: widget.outside
+              ? creamSidebar.withValues(alpha: 0.4)
+              : (_hover ? greenSoft.withValues(alpha: 0.35) : Colors.transparent),
+          border: Border.all(color: line.withValues(alpha: 0.6)),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                if (widget.isToday)
+                  PixelBox(
+                    fill: greenBright,
+                    border: green,
+                    borderWidth: 1.2,
+                    unit: 2,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    child: Text(
+                      '${widget.day.day}',
+                      style: mono(11, color: Colors.white,
+                          weight: FontWeight.w700),
+                    ),
+                  )
+                else
+                  Text(
+                    '${widget.day.day}',
+                    style: mono(
+                      11,
+                      color: widget.outside ? inkFaint : inkMuted,
+                    ),
+                  ),
+                const Spacer(),
+                // El "+" solo aparece al pasar el mouse, como en Notion.
+                AnimatedOpacity(
+                  opacity: _hover ? 1 : 0,
+                  duration: const Duration(milliseconds: 120),
+                  child: IgnorePointer(
+                    ignoring: !_hover,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: widget.onAdd,
+                        child: Text('+', style: mono(14, color: inkMuted)),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    SizedBox(
-                      height: 4,
-                      child: count == 0
-                          ? null
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                for (var i = 0; i < count.clamp(1, 3); i++)
-                                  Container(
-                                    width: 3,
-                                    height: 3,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 1,
-                                    ),
-                                    color: greenBright,
-                                  ),
-                              ],
-                            ),
-                    ),
-                  ],
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                physics: const ClampingScrollPhysics(),
+                children: [
+                  for (final t in widget.tasks)
+                    _Chip(
+                      task: t,
+                      color: widget.colorOf(t),
+                      onTap: () => widget.onEdit(t),
+                    ),
+                ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
+}
 
-  Widget _dayPanel(List<Task> tasks) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(fmtDate(_selected), style: display(28, color: ink)),
-        const SizedBox(height: 4),
-        Text(
-          tasks.isEmpty
-              ? 'Sin tareas para este día'
-              : '${tasks.length} tarea${tasks.length == 1 ? '' : 's'}',
-          style: mono(13, color: inkMuted),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: ListView.builder(
-            itemCount: tasks.length,
-            itemBuilder: (context, i) => SizedBox(
-              height: taskRowHeight,
-              child: TaskRow(
-                task: tasks[i],
-                onToggle: (v) => widget.onToggle(tasks[i], v),
-                onEdit: () => widget.onEdit(tasks[i]),
+class _Chip extends StatefulWidget {
+  const _Chip({required this.task, required this.color, required this.onTap});
+
+  final Task task;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  State<_Chip> createState() => _ChipState();
+}
+
+class _ChipState extends State<_Chip> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.task;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+          color: _hover
+              ? widget.color.withValues(alpha: 0.28)
+              : widget.color.withValues(alpha: 0.16),
+          child: Row(
+            children: [
+              Container(width: 3, height: 11, color: widget.color),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  t.text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: mono(
+                    10,
+                    color: t.done ? inkFaint : ink,
+                  ).copyWith(
+                    decoration: t.done ? TextDecoration.lineThrough : null,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
