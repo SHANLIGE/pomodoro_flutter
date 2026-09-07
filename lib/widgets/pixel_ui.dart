@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import '../task.dart';
 import '../theme.dart';
+import 'date_editor.dart';
 import 'pixel_box.dart';
+import 'pixel_ui.dart';
+import 'sidebar.dart';
 
 class PixelButton extends StatefulWidget {
   const PixelButton({

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import '../task.dart';
 import '../theme.dart';
-
+import 'date_editor.dart';
+import 'pixel_box.dart';
+import 'pixel_ui.dart';
+import 'sidebar.dart';
 /// Contorno escalonado del pixel art: en vez de una curva, las esquinas
 /// bajan en dos peldaños de un pixel lógico cada uno.
 Path pixelPath(Size size, double u) {

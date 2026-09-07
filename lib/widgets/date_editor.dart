@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../date_utils.dart';
 import '../theme.dart';
 import 'pixel_box.dart';
-
 /// Editor de fechas embebido, al estilo Notion: calendario siempre visible,
 /// más interruptores para incluir hora y para convertirlo en rango.
 class DateEditor extends StatefulWidget {

@@ -79,9 +79,14 @@ class _AppShellState extends State<AppShell> {
     _input.clear();
   }
 
-  Future<void> _editTask(Task task) async {
-    final result = await showTaskDialog(context, task);
-    if (result == null) return;
+    Future<bool> _editTask(Task task) async {
+    final result = await showTaskDialog(
+      context,
+      task,
+      projects: _projects,
+      onCreateProject: _createProjectInline,
+    );
+    if (result == null) return false;
 
     setState(() {
       if (result.deleted) {
@@ -90,9 +95,29 @@ class _AppShellState extends State<AppShell> {
         task.text = result.text;
         task.start = result.start;
         task.end = result.end;
+        task.projectId = result.projectId;
       }
     });
+    return true;
   }
+  Future<Project?> _createProjectInline() async {
+    final name = await showNameDialog(
+      context,
+      title: 'Nuevo proyecto',
+      hint: 'Nombre del proyecto',
+    );
+    if (name == null) return null;
+
+    final id = _nextProjectId++;
+    final project = Project(
+      id,
+      name,
+      projectPalette[id % projectPalette.length],
+    );
+    setState(() => _projects.add(project));
+    return project;
+  }
+    /// Crea una tarea vacía en ese día y abre el editor de una vez.
     /// Crea una tarea vacía en ese día y abre el editor de una vez.
   Future<void> _addTaskOnDate(DateTime day) async {
     final task = Task(
@@ -102,29 +127,21 @@ class _AppShellState extends State<AppShell> {
       start: day,
     );
     setState(() => _tasks.add(task));
-    await _editTask(task);
-    // Si se canceló sin cambiar nada, no dejamos basura.
-    if (task.text == 'Nueva tarea' && mounted) {
+
+    final saved = await _editTask(task);
+    // Si se canceló, no dejamos la tarea provisional.
+    if (!saved && mounted) {
       setState(() => _tasks.remove(task));
     }
   }
 
   // --------------------------------------------------------- proyectos
 
-  Future<void> _addProject() async {
-    final name = await showNameDialog(
-      context,
-      title: 'Nuevo proyecto',
-      hint: 'Nombre del proyecto',
-    );
-    if (name == null) return;
-
+    Future<void> _addProject() async {
+    final project = await _createProjectInline();
+    if (project == null) return;
     setState(() {
-      final id = _nextProjectId++;
-      // El color se reparte cíclicamente por la paleta.
-      final color = projectPalette[id % projectPalette.length];
-      _projects.add(Project(id, name, color));
-      _currentProject = id;
+      _currentProject = project.id;
       _section = AppSection.todas;
       _settingsOpen = false;
     });
