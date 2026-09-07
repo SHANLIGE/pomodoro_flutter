@@ -12,6 +12,7 @@ import 'widgets/sidebar.dart';
 import 'widgets/task_list.dart';
 import 'widgets/timer_bar.dart';
 import 'widgets/title_bar.dart';
+import 'widgets/pixel_ui.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -99,6 +100,28 @@ class _AppShellState extends State<AppShell> {
       }
     });
     return true;
+  }
+    Future<void> _clearCompleted() async {
+    final count = _visible.length;
+    if (count == 0) return;
+
+    final ok = await showConfirmDialog(
+      context,
+      title: 'Limpiar completadas',
+      message: 'Se eliminarán $count tarea${count == 1 ? '' : 's'} '
+          'completada${count == 1 ? '' : 's'}. Esta acción no se puede deshacer.',
+      confirmLabel: 'Limpiar',
+    );
+    if (!ok) return;
+
+    setState(() {
+      // Respeta el filtro de proyecto activo: solo borra lo que se ve.
+      _tasks.removeWhere(
+        (t) =>
+            t.done &&
+            (_currentProject == null || t.projectId == _currentProject),
+      );
+    });
   }
   Future<Project?> _createProjectInline() async {
     final name = await showNameDialog(
@@ -398,17 +421,18 @@ class _AppShellState extends State<AppShell> {
       Widget _buildSection() {
     if (_settingsOpen) return const SettingsView();
 
-    if (_section == AppSection.calendario && _currentProject == null) {
+        if (_section == AppSection.calendario && _currentProject == null) {
       return CalendarView(
-        tasks: _tasks.where((t) => t.hasSchedule).toList(),
+        // Las completadas no ensucian el calendario: viven en su sección.
+        tasks: _tasks.where((t) => t.hasSchedule && !t.done).toList(),
         colorOf: _colorOf,
         onEdit: _editTask,
         onAddOnDate: _addTaskOnDate,
       );
     }
 
-    final completed = _section == AppSection.completadas;
-    return TaskList(
+        final completed = _section == AppSection.completadas;
+    final list = TaskList(
       tasks: _visible,
       onToggle: (task, done) => setState(() => task.done = done),
       onEdit: _editTask,
@@ -416,6 +440,28 @@ class _AppShellState extends State<AppShell> {
       emptyHint: completed
           ? 'Marca una tarea para verla aquí.'
           : 'Escribe arriba para agregar la primera.',
+    );
+
+    if (!completed) return list;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_visible.isNotEmpty) ...[
+          Row(
+            children: [
+              const Spacer(),
+              PixelButton(
+                label: 'Limpiar (${_visible.length})',
+                danger: true,
+                onTap: _clearCompleted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+        ],
+        Expanded(child: list),
+      ],
     );
   }
 }

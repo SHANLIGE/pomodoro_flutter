@@ -1,3 +1,5 @@
+import 'date_utils.dart';
+
 class Task {
   Task({
     required this.id,
@@ -8,15 +10,14 @@ class Task {
   });
 
   final int id;
-  String text; // mutable: se puede editar
+  String text;
   int? projectId;
-  DateTime? start; // inicio opcional
-  DateTime? end; // fin o vencimiento
+  DateTime? start;
+  DateTime? end;
   bool done = false;
 
   bool get hasSchedule => start != null || end != null;
 
-  /// Día al que pertenece en el calendario.
   DateTime? get anchorDay {
     final d = start ?? end;
     return d == null ? null : DateTime(d.year, d.month, d.day);
@@ -25,25 +26,13 @@ class Task {
   /// Etiqueta corta que se muestra en la fila.
   String? get scheduleLabel {
     if (start != null && end != null) {
-      return _sameDay(start!, end!)
-          ? '${fmtShort(start!)} – ${_hhmm(end!)}'
-          : '${fmtShort(start!)} → ${fmtShort(end!)}';
+      // Mismo día: no repetimos la fecha, solo la hora de fin.
+      return sameDay(start!, end!)
+          ? '${fmtDateTime(start!)} – ${hhmm(end!)}'
+          : '${fmtDate(start!)} → ${fmtDate(end!)}';
     }
-    if (end != null) return 'Vence ${fmtShort(end!)}';
-    if (start != null) return fmtShort(start!);
+    if (end != null) return 'Vence ${fmtDateTime(end!)}';
+    if (start != null) return fmtDateTime(start!);
     return null;
-  }
-
-  static bool _sameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-
-  static String _hhmm(DateTime d) =>
-      '${d.hour.toString().padLeft(2, '0')}:'
-      '${d.minute.toString().padLeft(2, '0')}';
-
-  static String fmtShort(DateTime d) {
-    final day = '${d.day}/${d.month}';
-    final hasTime = d.hour != 0 || d.minute != 0;
-    return hasTime ? '$day ${_hhmm(d)}' : day;
   }
 }

@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 const monthNames = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -5,15 +7,19 @@ const monthNames = [
 
 const weekdayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
-String fmtDate(DateTime d) =>
-    '${d.day} ${monthNames[d.month - 1].toLowerCase()}';
+/// Formato corto con día de la semana: "mar, 13 sept".
+String fmtDate(DateTime d) => DateFormat("EEE, d MMM", 'es').format(d);
 
-String fmtLong(DateTime d) =>
-    '${d.day} de ${monthNames[d.month - 1].toLowerCase()} ${d.year}';
+/// El mismo, con año: "mar, 13 sept 2026".
+String fmtLong(DateTime d) => DateFormat("EEE, d MMM y", 'es').format(d);
 
-String hhmm(DateTime d) =>
-    '${d.hour.toString().padLeft(2, '0')}:'
-    '${d.minute.toString().padLeft(2, '0')}';
+String hhmm(DateTime d) => DateFormat.Hm('es').format(d);
+
+/// Fecha con hora si la tiene: "mar, 13 sept · 09:00".
+String fmtDateTime(DateTime d) {
+  final hasTime = d.hour != 0 || d.minute != 0;
+  return hasTime ? '${fmtDate(d)} · ${hhmm(d)}' : fmtDate(d);
+}
 
 bool sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;

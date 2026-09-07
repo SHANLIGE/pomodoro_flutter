@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app_shell.dart';
 import 'theme.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
     await windowManager.setAsFrameless();
     await windowManager.show();
     await windowManager.focus();
+    await initializeDateFormatting('es');
   });
 
   runApp(const MoriTaimuApp());
