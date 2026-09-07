@@ -1,13 +1,13 @@
 import 'dart:async';
-
-import 'widgets/project_dialog.dart';
-
 import 'package:flutter/material.dart';
 
 import 'task.dart';
 import 'theme.dart';
 import 'widgets/app_icon.dart';
+import 'widgets/calendar_view.dart';
+import 'widgets/dialogs.dart';
 import 'widgets/pixel_box.dart';
+import 'widgets/settings_view.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/task_list.dart';
 import 'widgets/timer_bar.dart';
@@ -22,14 +22,15 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   final _tasks = <Task>[];
+  final _projects = <Project>[];
   final _input = TextEditingController();
+
   int _nextId = 0;
+  int _nextProjectId = 0;
 
   AppSection _section = AppSection.hoy;
   int? _currentProject;
-
-  final _projects = <Project>[];
-  int _nextProjectId = 0;
+  bool _settingsOpen = false;
 
   final _minCtrl = FixedExtentScrollController(initialItem: 25);
   final _secCtrl = FixedExtentScrollController(initialItem: 0);
@@ -50,7 +51,7 @@ class _AppShellState extends State<AppShell> {
     super.dispose();
   }
 
-  // --- Tareas ---
+  // ------------------------------------------------------------ tareas
 
   /// Primero filtra por proyecto, luego la sección decide qué subconjunto.
   List<Task> get _scoped => _currentProject == null
@@ -62,7 +63,10 @@ class _AppShellState extends State<AppShell> {
     return switch (_section) {
       AppSection.hoy => base.where((t) => !t.done).toList(),
       AppSection.completadas => base.where((t) => t.done).toList(),
-      _ => [...base.where((t) => !t.done), ...base.where((t) => t.done)],
+      _ => [
+          ...base.where((t) => !t.done),
+          ...base.where((t) => t.done),
+        ],
     };
   }
 
@@ -75,8 +79,29 @@ class _AppShellState extends State<AppShell> {
     _input.clear();
   }
 
+  Future<void> _editTask(Task task) async {
+    final result = await showTaskDialog(context, task);
+    if (result == null) return;
+
+    setState(() {
+      if (result.deleted) {
+        _tasks.remove(task);
+      } else {
+        task.text = result.text;
+        task.start = result.start;
+        task.end = result.end;
+      }
+    });
+  }
+
+  // --------------------------------------------------------- proyectos
+
   Future<void> _addProject() async {
-    final name = await showProjectDialog(context);
+    final name = await showNameDialog(
+      context,
+      title: 'Nuevo proyecto',
+      hint: 'Nombre del proyecto',
+    );
     if (name == null) return;
 
     setState(() {
@@ -86,13 +111,46 @@ class _AppShellState extends State<AppShell> {
       _projects.add(Project(id, name, color));
       _currentProject = id;
       _section = AppSection.todas;
+      _settingsOpen = false;
     });
   }
 
-  void _deleteTask(Task task) {
-    setState(() => _tasks.remove(task));
+  Future<void> _handleProjectAction(Project p, ProjectAction action) async {
+    switch (action) {
+      case ProjectAction.pin:
+        setState(() => p.pinned = !p.pinned);
+
+      case ProjectAction.rename:
+        final name = await showNameDialog(
+          context,
+          title: 'Renombrar proyecto',
+          initial: p.name,
+          hint: 'Nombre del proyecto',
+        );
+        if (name != null) setState(() => p.name = name);
+
+      case ProjectAction.delete:
+        final count = _tasks.where((t) => t.projectId == p.id).length;
+        if (count > 0) {
+          final ok = await showConfirmDialog(
+            context,
+            title: 'Eliminar proyecto',
+            message: '"${p.name}" contiene $count '
+                'tarea${count == 1 ? '' : 's'}. '
+                'Si continúas se eliminarán también.',
+            confirmLabel: 'Eliminar todo',
+          );
+          if (!ok) return;
+        }
+        setState(() {
+          _tasks.removeWhere((t) => t.projectId == p.id);
+          _projects.remove(p);
+          if (_currentProject == p.id) _currentProject = null;
+        });
+    }
   }
-  // --- Timer ---
+
+  // ------------------------------------------------------------- timer
 
   void _syncDuration() {
     setState(() {
@@ -131,15 +189,22 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
-  // --- UI ---
+  // ---------------------------------------------------------------- UI
 
   String get _headerTitle {
+    if (_settingsOpen) return 'Ajustes';
     if (_currentProject != null) {
+      // where en vez de firstWhere: no revienta si el proyecto ya no existe.
       final match = _projects.where((p) => p.id == _currentProject);
       if (match.isNotEmpty) return match.first.name;
     }
     return _section.label;
   }
+
+  bool get _showInput =>
+      !_settingsOpen &&
+      _section != AppSection.completadas &&
+      _section != AppSection.calendario;
 
   @override
   Widget build(BuildContext context) {
@@ -157,15 +222,20 @@ class _AppShellState extends State<AppShell> {
                   onSelect: (s) => setState(() {
                     _section = s;
                     _currentProject = null;
+                    _settingsOpen = false;
                   }),
                   projects: _projects,
-                  currentProject: _currentProject,
+                  currentProject: _settingsOpen ? null : _currentProject,
                   onSelectProject: (id) => setState(() {
                     _currentProject = id;
                     _section = AppSection.todas;
+                    _settingsOpen = false;
                   }),
                   onAddProject: _addProject,
-                  onOpenSettings: () {},
+                  onProjectAction: _handleProjectAction,
+                  onOpenSettings: () =>
+                      setState(() => _settingsOpen = !_settingsOpen),
+                  settingsOpen: _settingsOpen,
                 ),
                 Expanded(child: _buildContent()),
               ],
@@ -190,14 +260,23 @@ class _AppShellState extends State<AppShell> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Row(
-                      children: [
-                        Text(_headerTitle, style: display(42)),
-                        const SizedBox(width: 8),
-                        Text('✦', style: mono(12, color: green)),
-                      ],
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _headerTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: display(42),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('✦', style: mono(12, color: green)),
+                        ],
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -224,7 +303,7 @@ class _AppShellState extends State<AppShell> {
                 ],
               ),
               const SizedBox(height: 18),
-              if (_section != AppSection.completadas) ...[
+              if (_showInput) ...[
                 _inputBox(),
                 const SizedBox(height: 26),
               ],
@@ -242,7 +321,6 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  //icono microfono
   Widget _inputBox() {
     return PixelBox(
       fill: cream,
@@ -272,7 +350,7 @@ class _AppShellState extends State<AppShell> {
             child: const SizedBox(
               width: 36,
               height: 32,
-              child: Center(child: Iconblock('trash')),
+              child: Center(child: AppIcon('mic', size: 18)),
             ),
           ),
         ],
@@ -281,18 +359,13 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _buildSection() {
+    if (_settingsOpen) return const SettingsView();
+
     if (_section == AppSection.calendario && _currentProject == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppIcon('calendar', size: 72),
-            const SizedBox(height: 18),
-            Text('Calendario', style: display(32, color: green)),
-            const SizedBox(height: 6),
-            Text('Próximamente.', style: mono(14, color: inkMuted)),
-          ],
-        ),
+      return CalendarView(
+        tasks: _tasks.where((t) => t.hasSchedule).toList(),
+        onToggle: (task, done) => setState(() => task.done = done),
+        onEdit: _editTask,
       );
     }
 
@@ -300,7 +373,7 @@ class _AppShellState extends State<AppShell> {
     return TaskList(
       tasks: _visible,
       onToggle: (task, done) => setState(() => task.done = done),
-      onDelete: _deleteTask,
+      onEdit: _editTask,
       emptyTitle: completed ? 'Nada completado' : 'Sin tareas',
       emptyHint: completed
           ? 'Marca una tarea para verla aquí.'

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../task.dart';
 import '../theme.dart';
 import 'app_icon.dart';
@@ -10,12 +9,12 @@ class TaskRow extends StatefulWidget {
     super.key,
     required this.task,
     required this.onToggle,
-    required this.onDelete,
+    required this.onEdit,
   });
 
   final Task task;
   final ValueChanged<bool> onToggle;
-  final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   @override
   State<TaskRow> createState() => _TaskRowState();
@@ -24,11 +23,20 @@ class TaskRow extends StatefulWidget {
 class _TaskRowState extends State<TaskRow> {
   bool _hover = false;
 
+  bool get _overdue {
+    final end = widget.task.end;
+    if (end == null || widget.task.done) return false;
+    return end.isBefore(DateTime.now());
+  }
+
   @override
   Widget build(BuildContext context) {
+    final label = widget.task.scheduleLabel;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
+      // Anima solo cuando cambia el valor destino; sin controller ni dispose.
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: widget.task.done ? 1.0 : 0.0),
         duration: const Duration(milliseconds: 320),
@@ -41,27 +49,46 @@ class _TaskRowState extends State<TaskRow> {
                 onChanged: widget.onToggle,
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: CustomPaint(
-                    foregroundPainter: _StrikePainter(progress),
-                    child: Text(
-                      widget.task.text,
-                      style: mono(
-                        15,
-                        color: Color.lerp(ink, inkFaint, progress)!,
-                      ),
+              // Flexible + ellipsis: el texto largo se corta en vez de
+              // desbordar la fila.
+              Flexible(
+                child: CustomPaint(
+                  foregroundPainter: _StrikePainter(progress),
+                  child: Text(
+                    widget.task.text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: mono(
+                      15,
+                      color: Color.lerp(ink, inkFaint, progress)!,
                     ),
                   ),
                 ),
               ),
+              if (label != null) ...[
+                const SizedBox(width: 10),
+                PixelBox(
+                  fill: _overdue ? dangerSoft : greenSoft,
+                  border: _overdue ? projectRed : greenBorder,
+                  borderWidth: 1.2,
+                  unit: 2,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: mono(11, color: _overdue ? projectRed : green),
+                  ),
+                ),
+              ],
+              const Spacer(),
               // AnimatedOpacity mantiene el espacio reservado, así el texto
               // no se mueve al aparecer el icono.
               AnimatedOpacity(
                 opacity: _hover ? 1 : 0,
                 duration: const Duration(milliseconds: 140),
-                child: _TrashButton(enabled: _hover, onTap: widget.onDelete),
+                child: _EditButton(enabled: _hover, onTap: widget.onEdit),
               ),
             ],
           );
@@ -71,16 +98,17 @@ class _TaskRowState extends State<TaskRow> {
   }
 }
 
-class _TrashButton extends StatefulWidget {
-  const _TrashButton({required this.enabled, required this.onTap});
+class _EditButton extends StatefulWidget {
+  const _EditButton({required this.enabled, required this.onTap});
+
   final bool enabled;
   final VoidCallback onTap;
 
   @override
-  State<_TrashButton> createState() => _TrashButtonState();
+  State<_EditButton> createState() => _EditButtonState();
 }
 
-class _TrashButtonState extends State<_TrashButton> {
+class _EditButtonState extends State<_EditButton> {
   bool _hover = false;
 
   @override
@@ -95,14 +123,14 @@ class _TrashButtonState extends State<_TrashButton> {
         child: GestureDetector(
           onTap: widget.onTap,
           child: PixelBox(
-            fill: _hover ? const Color(0xFFF6E3E0) : Colors.transparent,
-            border: _hover ? projectRed : Colors.transparent,
+            fill: _hover ? greenSoft : Colors.transparent,
+            border: _hover ? greenBorder : Colors.transparent,
             borderWidth: 1.5,
             unit: 2,
             child: const SizedBox(
               width: 32,
               height: 30,
-              child: Center(child: AppIcon('trash', size: 17)),
+              child: Center(child: AppIcon('edit', size: 16)),
             ),
           ),
         ),
@@ -113,6 +141,7 @@ class _TrashButtonState extends State<_TrashButton> {
 
 class _StrikePainter extends CustomPainter {
   _StrikePainter(this.progress);
+
   final double progress;
 
   @override
@@ -131,6 +160,7 @@ class _StrikePainter extends CustomPainter {
 
 class _PixelCheckbox extends StatefulWidget {
   const _PixelCheckbox({required this.value, required this.onChanged});
+
   final bool value;
   final ValueChanged<bool> onChanged;
 

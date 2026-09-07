@@ -16,11 +16,15 @@ enum AppSection {
   final String image;
 }
 
+enum ProjectAction { rename, pin, delete }
+
 class Project {
-  Project(this.id, this.name, this.color);
+  Project(this.id, this.name, this.color, {this.pinned = false});
+
   final int id;
-  final String name;
+  String name; // mutable: se puede renombrar
   final Color color;
+  bool pinned;
 }
 
 class Sidebar extends StatelessWidget {
@@ -32,7 +36,9 @@ class Sidebar extends StatelessWidget {
     required this.currentProject,
     required this.onSelectProject,
     required this.onAddProject,
+    required this.onProjectAction,
     required this.onOpenSettings,
+    required this.settingsOpen,
   });
 
   final AppSection current;
@@ -41,10 +47,21 @@ class Sidebar extends StatelessWidget {
   final int? currentProject;
   final ValueChanged<int> onSelectProject;
   final VoidCallback onAddProject;
+  final void Function(Project project, ProjectAction action) onProjectAction;
   final VoidCallback onOpenSettings;
+  final bool settingsOpen;
+
+  /// Los fijados suben al principio conservando su orden relativo.
+  List<Project> get _sorted {
+    final pinned = projects.where((p) => p.pinned).toList();
+    final rest = projects.where((p) => !p.pinned).toList();
+    return [...pinned, ...rest];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final list = _sorted;
+
     return Container(
       width: sidebarWidth,
       decoration: const BoxDecoration(
@@ -74,22 +91,33 @@ class Sidebar extends StatelessWidget {
                   for (final s in AppSection.values)
                     _NavRow(
                       label: s.label,
-                      emoji: '',
                       image: s.image,
-                      selected: s == current && currentProject == null,
+                      selected: s == current &&
+                          currentProject == null &&
+                          !settingsOpen,
                       onTap: () => onSelect(s),
                     ),
                   const SizedBox(height: 26),
                   _ProjectsHeader(onAdd: onAddProject),
                   const SizedBox(height: 8),
-                  for (var i = 0; i < projects.length; i++)
-                    _ProjectRow(
-                      project: projects[i],
-                      isLast: i == projects.length - 1,
-                      selected: currentProject == projects[i].id,
-                      onTap: () => onSelectProject(projects[i].id),
-                    ),
-                  const SizedBox(height: 180),
+                  if (list.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 30, top: 4),
+                      child: Text(
+                        'Sin proyectos aún',
+                        style: mono(13, color: inkFaint),
+                      ),
+                    )
+                  else
+                    for (var i = 0; i < list.length; i++)
+                      _ProjectRow(
+                        project: list[i],
+                        isLast: i == list.length - 1,
+                        selected: currentProject == list[i].id,
+                        onTap: () => onSelectProject(list[i].id),
+                        onAction: (a) => onProjectAction(list[i], a),
+                      ),
+                  const SizedBox(height: 190),
                 ],
               ),
             ),
@@ -111,7 +139,15 @@ class Sidebar extends StatelessWidget {
                   children: [
                     const AppIcon('gear', size: 22),
                     const SizedBox(width: 10),
-                    Text('Ajustes', style: mono(15, color: ink)),
+                    Text(
+                      'Ajustes',
+                      style: mono(
+                        15,
+                        color: ink,
+                        weight:
+                            settingsOpen ? FontWeight.w700 : FontWeight.w400,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -127,12 +163,11 @@ class _NavRow extends StatefulWidget {
   const _NavRow({
     required this.label,
     required this.image,
-    required this.emoji,
     required this.selected,
     required this.onTap,
   });
 
-  final String label, image, emoji;
+  final String label, image;
   final bool selected;
   final VoidCallback onTap;
 
@@ -142,7 +177,8 @@ class _NavRow extends StatefulWidget {
 
 class _NavRowState extends State<_NavRow> {
   bool _hover = false;
-  //size general de los iconos del sidebar
+
+  // size general de los iconos del sidebar
   @override
   Widget build(BuildContext context) {
     final active = widget.selected;
@@ -152,12 +188,17 @@ class _NavRowState extends State<_NavRow> {
         children: [
           AppIcon(widget.image, size: 38),
           const SizedBox(width: 8),
-          Text(
-            widget.label,
-            style: mono(
-              17,
-              color: ink,
-              weight: active ? FontWeight.w700 : FontWeight.w400,
+          // Expanded + ellipsis: etiquetas largas se cortan en vez de desbordar.
+          Expanded(
+            child: Text(
+              widget.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: mono(
+                17,
+                color: ink,
+                weight: active ? FontWeight.w700 : FontWeight.w400,
+              ),
             ),
           ),
         ],
@@ -203,6 +244,8 @@ class _ProjectsHeader extends StatelessWidget {
           Expanded(
             child: Text(
               'Proyectos',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: mono(15, color: ink, weight: FontWeight.w700),
             ),
           ),
@@ -210,7 +253,10 @@ class _ProjectsHeader extends StatelessWidget {
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
               onTap: onAdd,
-              child: Text('+', style: mono(20, color: inkMuted)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text('+', style: mono(20, color: inkMuted)),
+              ),
             ),
           ),
         ],
@@ -251,11 +297,13 @@ class _ProjectRow extends StatefulWidget {
     required this.isLast,
     required this.selected,
     required this.onTap,
+    required this.onAction,
   });
 
   final Project project;
   final bool isLast, selected;
   final VoidCallback onTap;
+  final ValueChanged<ProjectAction> onAction;
 
   @override
   State<_ProjectRow> createState() => _ProjectRowState();
@@ -266,6 +314,8 @@ class _ProjectRowState extends State<_ProjectRow> {
 
   @override
   Widget build(BuildContext context) {
+    final p = widget.project;
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
@@ -284,24 +334,97 @@ class _ProjectRowState extends State<_ProjectRow> {
                 ),
               ),
               PixelBox(
-                fill: widget.project.color,
+                fill: p.color,
                 border: ink.withValues(alpha: 0.35),
                 borderWidth: 1.5,
                 unit: 2,
                 child: const SizedBox(width: 20, height: 16),
               ),
               const SizedBox(width: 10),
-              Text(
-                widget.project.name,
-                style: mono(
-                  14,
-                  color: _hover || widget.selected ? ink : inkMuted,
-                  weight: widget.selected ? FontWeight.w700 : FontWeight.w400,
+              if (p.pinned) ...[
+                const AppIcon('pin', size: 12),
+                const SizedBox(width: 4),
+              ],
+              // Expanded + ellipsis: nombres largos se cortan.
+              Expanded(
+                child: Text(
+                  p.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: mono(
+                    14,
+                    color: _hover || widget.selected ? ink : inkMuted,
+                    weight: widget.selected ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ),
+              ),
+              AnimatedOpacity(
+                opacity: _hover ? 1 : 0,
+                duration: const Duration(milliseconds: 140),
+                child: IgnorePointer(
+                  ignoring: !_hover,
+                  child: _ProjectMenu(
+                    pinned: p.pinned,
+                    onAction: widget.onAction,
+                  ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProjectMenu extends StatelessWidget {
+  const _ProjectMenu({required this.pinned, required this.onAction});
+
+  final bool pinned;
+  final ValueChanged<ProjectAction> onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<ProjectAction>(
+      tooltip: '',
+      padding: EdgeInsets.zero,
+      splashRadius: 1,
+      color: cream,
+      elevation: 4,
+      // Bevel en vez de curva: más cerca del pixel art que un borde redondo.
+      shape: const BeveledRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(6)),
+        side: BorderSide(color: line, width: 2),
+      ),
+      onSelected: onAction,
+      itemBuilder: (_) => [
+        _item(ProjectAction.rename, 'edit', 'Renombrar'),
+        _item(ProjectAction.pin, 'pin', pinned ? 'Desfijar' : 'Fijar'),
+        _item(ProjectAction.delete, 'trash', 'Eliminar', danger: true),
+      ],
+      child: SizedBox(
+        width: 28,
+        height: 30,
+        child: Center(child: Text('⋯', style: mono(18, color: inkMuted))),
+      ),
+    );
+  }
+
+  PopupMenuItem<ProjectAction> _item(
+    ProjectAction value,
+    String image,
+    String label, {
+    bool danger = false,
+  }) {
+    return PopupMenuItem<ProjectAction>(
+      value: value,
+      height: 40,
+      child: Row(
+        children: [
+          AppIcon(image, size: 16),
+          const SizedBox(width: 10),
+          Text(label, style: mono(14, color: danger ? projectRed : ink)),
+        ],
       ),
     );
   }

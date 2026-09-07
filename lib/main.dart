@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app_shell.dart';
@@ -35,6 +36,15 @@ class MoriTaimuApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mori Taimu',
       debugShowCheckedModeBanner: false,
+      // Los selectores de fecha y hora salen en español gracias a esto.
+      // También es la base del cambio de idioma en Ajustes.
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.transparent,

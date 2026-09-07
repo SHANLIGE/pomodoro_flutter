@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../task.dart';
 import '../theme.dart';
 import 'app_icon.dart';
@@ -10,14 +9,14 @@ class TaskList extends StatelessWidget {
     super.key,
     required this.tasks,
     required this.onToggle,
+    required this.onEdit,
     required this.emptyTitle,
     required this.emptyHint,
-    required this.onDelete,
   });
 
   final List<Task> tasks;
   final void Function(Task task, bool done) onToggle;
-  final void Function(Task task) onDelete;
+  final void Function(Task task) onEdit;
   final String emptyTitle;
   final String emptyHint;
 
@@ -28,7 +27,7 @@ class TaskList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon('play-solid', size: 78),
+            const AppIcon('empty', size: 78),
             const SizedBox(height: 18),
             Text(emptyTitle, style: display(32, color: green)),
             const SizedBox(height: 6),
@@ -57,7 +56,7 @@ class TaskList extends StatelessWidget {
                 child: TaskRow(
                   task: tasks[i],
                   onToggle: (v) => onToggle(tasks[i], v),
-                  onDelete: () => onDelete(tasks[i]),
+                  onEdit: () => onEdit(tasks[i]),
                 ),
               ),
           ],

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // --- Paleta ---
-const cream = Color(0xFFFCF9F2);
-const creamSidebar = Color(0xFFFCF9F2);
-const creamBar = Color(0xFFFCF9F2);
+const cream = Color(0xFFFBF9F3);
+const creamSidebar = Color(0xFFF4F1E7);
+const creamBar = Color(0xFFFCFBF6);
 
 const green = Color(0xFF3F9142);
 const greenBright = Color(0xFF4CAF50);
 const greenSoft = Color(0xFFEAF3E2);
 const greenBorder = Color(0xFF6BA85F);
 
-const ink = Color(0xFF364E3F);
+const ink = Color(0xFF2B2B2B);
 const inkMuted = Color(0xFF8C8B80);
 const inkFaint = Color(0xFFB5B2A5);
 const line = Color(0xFFD8D3C4);
@@ -23,7 +23,7 @@ const projectAmber = Color(0xFFE8A33D);
 const projectTeal = Color(0xFF3DA89B);
 const projectPurple = Color(0xFF8B6FD4);
 
-/// Colores que se van repartiendo entre proyectos nuevos.
+/// Colores que se reparten cíclicamente entre proyectos nuevos.
 const projectPalette = [
   projectPink,
   projectBlue,
@@ -32,6 +32,10 @@ const projectPalette = [
   projectTeal,
   projectPurple,
 ];
+
+// Tonos de peligro, para eliminar y vencidos.
+const dangerSoft = Color(0xFFF6E3E0);
+const dangerBright = Color(0xFFEC7565);
 
 // --- Medidas ---
 const px = 3.0; // unidad de "pixel" para los bordes escalonados
@@ -53,10 +57,11 @@ TextStyle mono(
   Color color = ink,
   FontWeight weight = FontWeight.w400,
   double spacing = 0,
-}) => GoogleFonts.kodeMono(
-  fontSize: size,
-  color: color,
-  fontWeight: weight,
-  letterSpacing: spacing,
-  height: 1.35,
-);
+}) =>
+    GoogleFonts.kodeMono(
+      fontSize: size,
+      color: color,
+      fontWeight: weight,
+      letterSpacing: spacing,
+      height: 1.35,
+    );

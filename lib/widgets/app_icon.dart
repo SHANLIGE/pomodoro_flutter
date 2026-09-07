@@ -1,28 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Carga un sprite de assets/icons/<name>.png sin suavizado.
-/// Si el archivo aún no existe, cae al emoji de respaldo.
-///
-
-class Iconblock extends StatelessWidget {
-  const Iconblock(this.name, {super.key, this.size = 22});
-
-  final String name;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      'assets/icons/$name.png',
-      width: size,
-      height: size,
-      filterQuality: FilterQuality.none,
-      isAntiAlias: false,
-      errorBuilder: (_, _, _) => SizedBox(width: size, height: size),
-    );
-  }
-}
-
+/// Si el archivo no existe, deja un hueco del mismo tamaño.
 class AppIcon extends StatelessWidget {
   const AppIcon(this.name, {super.key, this.size = 22});
 
