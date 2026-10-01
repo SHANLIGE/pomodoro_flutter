@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import '../task.dart';
+
 import '../theme.dart';
-import 'date_editor.dart';
 import 'pixel_box.dart';
-import 'pixel_ui.dart';
-import 'sidebar.dart';
 
 class PixelButton extends StatefulWidget {
   const PixelButton({
@@ -30,8 +27,7 @@ class _PixelButtonState extends State<PixelButton> {
   @override
   Widget build(BuildContext context) {
     final accent = widget.danger ? projectRed : green;
-    final accentBright =
-        widget.danger ? const Color(0xFFEC7565) : greenBright;
+    final accentBright = widget.danger ? const Color(0xFFEC7565) : greenBright;
     final softBg = widget.danger ? const Color(0xFFF6E3E0) : greenSoft;
 
     final fill = widget.filled
